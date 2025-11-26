@@ -112,7 +112,7 @@ class DeleteWord:
 
 if __name__ == "__main__":
     # --- 1. テスト用のダミーデータ準備 ---
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
     # 助詞・記号を含むテスト文
     test_sentence_random = "日本の首相が、新しい研究開発の予算を決定した。"

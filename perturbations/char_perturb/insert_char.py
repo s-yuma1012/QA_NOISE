@@ -124,7 +124,7 @@ class InsertChar:
 
 if __name__ == "__main__":
     # --- 1. テスト用のダミーデータ準備 ---
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
     # テスト対象の単語
     test_word = "コンピューター" # 7文字

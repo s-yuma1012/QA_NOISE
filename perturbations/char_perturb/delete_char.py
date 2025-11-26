@@ -114,7 +114,7 @@ class DeleteChar:
 if __name__ == "__main__":
     # --- 1. テスト用のダミーデータ準備 ---
     # DeleteCharクラスの初期化時にDatasetオブジェクトが要求されるため、最小限のダミーデータを作成
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
     # テスト対象の単語
     test_word = "コンピューター" # 6文字

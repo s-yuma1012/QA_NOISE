@@ -126,8 +126,7 @@ class ReplaceChar:
 
 if __name__ == "__main__":
     # --- Quick Test: execute_replacement (コアロジック) ---
-    from datasets import Dataset 
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
     test_word = "コンピューター"
     test_sentence = "今日、東京大学で重要な研究結果が発表された。"
