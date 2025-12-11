@@ -113,19 +113,28 @@ class InsertChar:
         return sample
 
 if __name__ == "__main__":
-    # クイックテスト
     from datasets import Dataset 
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
     
-    # テスト文: 末尾にノイズが入るか確認
-    test_sentence = "東京大学で研究する。"
+    # JSQuADから抽出した実データ5件
+    test_sentences = [
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
+    ]
+    
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
 
-    # 攻撃インスタンスを作成
-    inserter = InsertChar(data=DUMMY_DATA, data_field='question', max_perturbs=1, length_of_word_to_perturb=1)
+    print(f"\n=== Test Runner with JSQuAD Samples ===")
     
-    print(f"\n--- [Quick Test: Alphabet Insertion at End] ---")
     
-    dummy_sample = DUMMY_DATA[0].copy()
-    dummy_sample['question'] = test_sentence
+    attacker = InsertChar(data=DUMMY_DATA, data_field='question', max_perturbs=1, length_of_word_to_perturb=1)
     
-    inserter.apply_on_sample(dummy_sample)
+    for i, sent in enumerate(test_sentences):
+        print(f"\n--- Sample {i+1} ---")
+        dummy_sample = DUMMY_DATA[0].copy()
+        dummy_sample['question'] = sent
+        
+        # 実行 (内部でDEBUGプリントが出ます)
+        attacker.apply_on_sample(dummy_sample)

@@ -73,7 +73,7 @@ class HiraganaToKatakana:
             except:
                 continue 
             
-            if pos in ['记号', 'BOS/EOS', '空白']:
+            if pos in ['記号', 'BOS/EOS', '空白']:
                 continue
             
             if (self.pos_tag is None or pos == self.pos_tag):
@@ -106,12 +106,26 @@ class HiraganaToKatakana:
 
 if __name__ == "__main__":
     from datasets import Dataset 
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー'], 'context': ['ダミー']})
-    test_sentences = ["研究しました。", "美味しい食べ物。"]
-    converter = HiraganaToKatakana(data=DUMMY_DATA, data_field='question', max_words=1)
     
-    print(f"\n--- [Quick Test: Hiragana to Katakana (1 Char)] ---")
-    for sent in test_sentences:
+    # JSQuADから抽出した実データ5件
+    test_sentences = [
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
+    ]
+    
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
+
+    print(f"\n=== Test Runner with JSQuAD Samples ===")
+    
+    attacker = HiraganaToKatakana(data=DUMMY_DATA, data_field='question', max_words=2)
+    
+    for i, sent in enumerate(test_sentences):
+        print(f"\n--- Sample {i+1} ---")
         dummy_sample = DUMMY_DATA[0].copy()
         dummy_sample['question'] = sent
-        converter.apply_on_sample(dummy_sample)
+        
+        # 実行 (内部でDEBUGプリントが出ます)
+        attacker.apply_on_sample(dummy_sample)

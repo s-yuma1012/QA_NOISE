@@ -8,10 +8,7 @@ from tqdm import tqdm
 tagger = Tagger()
 
 class DeleteWord:
-    """
-    日本語版の単語削除攻撃クラス (DRQ, DRC, DVQ, DVCに対応)。
-    ランダムな単語（または品詞指定の単語）を文脈から削除します。
-    """
+
     def __init__(self, data: Dataset, data_field: str='question', max_words: int=1, pos_tag: str=None):
         # 設定: 単語レベルでは max_perturbs (文字の繰り返し) は不要
         self.max_words: int = max_words
@@ -23,9 +20,6 @@ class DeleteWord:
         self.name: str = 'delete_word_jp'
 
     def execute_deletion(self, word_list: List[str]) -> List[str]:
-        """
-        単語リストからランダムに単語を一つ削除するコアロジック
-        """
         new_word_list = word_list.copy()
         
         if len(new_word_list) <= 1:
@@ -40,17 +34,11 @@ class DeleteWord:
         return new_word_list
 
     def apply_on_sample(self, sample: Dict) -> Dict:
-        """
-        datasets.map() 関数によって、個別のデータサンプルに攻撃を適用するラッパー
-        """
         raw_text = sample[self.data_field]
         
         # 1. Fugashi (MeCab) を使用して単語と品詞に分割
         tokens = list(tagger(raw_text)) 
         
-        #print(f"[DIAGNOSTIC] All POS Tags: {[str(t.feature).split(',')[0] for t in tokens]}")
-        # 2. 攻撃対象の単語を選定 (POSタグと長さのフィルター)
-        # 今回は単語全体を削除するため、文字長チェックは省略可能だが、ここでは品詞フィルターに集中
         target_indices = [] # 攻撃対象となる単語のインデックスを格納
         
         for i, token in enumerate(tokens):
@@ -94,7 +82,7 @@ class DeleteWord:
             indices_to_perturb.sort(reverse=True)
             for idx in indices_to_perturb:
                 # DEBUG: 削除単語の表示
-                print(f"[DEBUG-SENTENCE] -> Deleting Word: '{word_list[idx]}'")
+                print(f"-> Deleting Word: '{word_list[idx]}'")
                 word_list.pop(idx)
                 
             # 3-3. 単語リストを再結合 (スペース区切りは日本語では不自然だが、単語の境界を区別するために一時的に使用)
@@ -104,47 +92,28 @@ class DeleteWord:
             sample[f'{self.data_field}_perturbed_DWR'] = perturbed_text
             
         # 5. DEBUG表示
-        print(f"\n[DEBUG-SENTENCE] Original Text: {raw_text}")
-        print(f"[DEBUG-SENTENCE] Final Perturbed Text: {perturbed_text}")
-        print("----------------------------------")
+        print(f"Original Text: {raw_text}")
+        print(f"Final Perturbed Text: {perturbed_text}")
         
         return sample
 
 if __name__ == "__main__":
-    # --- 1. テスト用のダミーデータ準備 ---
+    from datasets import Dataset 
+    
+    test_sentences = [
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
+    ]
     DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
-    # 助詞・記号を含むテスト文
-    test_sentence_random = "日本の首相が、新しい研究開発の予算を決定した。"
-    test_sentence_pos = "東京大学の研究結果が、広く知られています。"
+    # 例: DeleteWord
+    attacker = DeleteWord(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag=None)
     
-    # 攻撃インスタンスを作成
-    # 1. POSタグ指定なし（ランダムな名詞/動詞などを削除）
-    deleter_random = DeleteWord(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag=None) 
-    # 2. POSタグ指定あり（名詞 '名詞' のみを削除）
-    deleter_noun = DeleteWord(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag='名詞')
-
-    print(f"\n--- [Quick Test: DeleteWord - 汎用攻撃] ---")
-    
-    # 1. 汎用攻撃のテスト
-    dummy_sample_random = DUMMY_DATA[0].copy()
-    dummy_sample_random['question'] = test_sentence_random
-    print(f"Original Text (Random): {test_sentence_random}")
-    
-    for i in range(3):
-        # 連続実行してランダム性とロジック崩壊がないかを確認
-        perturbed_sample = deleter_random.apply_on_sample(dummy_sample_random.copy())
-        print(f"Test {i+1} Result: {perturbed_sample['question_perturbed_DWR']}")
-
-
-    print(f"\n--- [Quick Test: DeleteWord - 名詞限定攻撃] ---")
-    
-    # 2. 名詞限定攻撃のテスト
-    dummy_sample_pos = DUMMY_DATA[0].copy()
-    dummy_sample_pos['question'] = test_sentence_pos
-    print(f"Original Text (Noun Only): {test_sentence_pos}")
-    
-    # apply_on_sampleを呼び出す
-    perturbed_sample = deleter_noun.apply_on_sample(dummy_sample_pos)
-    print(f"Final Perturbed Sentence: {perturbed_sample['question_perturbed_DWR']}")
-    print("----------------------------------")
+    print(f"\n=== Word Level Perturbation Test ===")
+    for i, sent in enumerate(test_sentences):
+        dummy_sample = DUMMY_DATA[0].copy()
+        dummy_sample['question'] = sent
+        attacker.apply_on_sample(dummy_sample)

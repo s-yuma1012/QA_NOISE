@@ -9,11 +9,7 @@ from tqdm import tqdm
 tagger = Tagger()
 
 class SynonymReplace:
-    """
-    日本語版の同義語置換攻撃クラス (Synonym Replacement)。
-    MLM (RoBERTa) を使用して、文脈を考慮しながら単語を別の表現に置き換えます。
-    例: "彼は速く走る" -> "彼は速く動く"
-    """
+    
     def __init__(self, data: Dataset, data_field: str='question', max_words: int=1, pos_tag: str=None, model_name: str="tohoku-nlp/bert-base-japanese-whole-word-masking"):
         self.max_words: int = max_words
         self.pos_tag = pos_tag # 日本語品詞タグ (例: '動詞', '形容詞')
@@ -30,7 +26,7 @@ class SynonymReplace:
         raw_text = sample[self.data_field]
         
         # DEBUG: 処理開始
-        print(f"\n[DEBUG-SENTENCE] Original Text: {raw_text}")
+        print(f"\nOriginal Text: {raw_text}")
 
         # 1. 単語分割
         tokens = list(tagger(raw_text)) 
@@ -92,14 +88,14 @@ class SynonymReplace:
                             break # 最もスコアが高い別の単語を採用
                     
                     if best_candidate:
-                        print(f"[DEBUG-SENTENCE] -> Synonym Replace: '{original_word}' -> '{best_candidate}'")
+                        print(f"-> Synonym Replace: '{original_word}' -> '{best_candidate}'")
                         # リストを更新
                         current_tokens[idx] = best_candidate
                     else:
-                        print(f"[DEBUG-SENTENCE] -> No suitable synonym found for '{original_word}'")
+                        print(f"-> No suitable synonym found for '{original_word}'")
                         
                 except Exception as e:
-                    print(f"[DEBUG-SENTENCE] -> MLM Error: {e}")
+                    print(f"-> MLM Error: {e}")
             
             # 文の再構築
             perturbed_text = "".join(current_tokens)
@@ -108,47 +104,29 @@ class SynonymReplace:
         sample[f'{self.data_field}_perturbed_SR'] = perturbed_text
         
         # DEBUG: 最終結果を表示
-        print(f"[DEBUG-SENTENCE] Final Perturbed Text: {perturbed_text}")
-        print("----------------------------------")
+        print(f"Final Perturbed Text: {perturbed_text}")
         
         return sample
 
 if __name__ == "__main__":
-    print("="*50)
-    print("   Synonym Replacement Test Runner")
-    print("="*50 + "\n")
-
-    # ダミーデータの準備
+    from datasets import Dataset 
+    
+    # JSQuADから抽出した実データ5件
+    test_sentences = [
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
+    ]
+    
     DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
-    # --- Test Case 1: 名詞の置換 (基本) ---
-    print("\n--- Test Case 1: Noun Replacement (max_words=1) ---")
-    test_sentence_1 = "日本の首相が、新しい研究開発の予算を決定した。"
-    replacer_noun = SynonymReplace(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag='名詞')
+    print(f"\n=== Synonym Replacement Test (JSQuAD) ===")
     
-    dummy_sample_1 = DUMMY_DATA[0].copy()
-    dummy_sample_1['question'] = test_sentence_1
-    replacer_noun.apply_on_sample(dummy_sample_1)
-
-
-    # --- Test Case 2: 動詞の置換 ---
-    print("\n--- Test Case 2: Verb Replacement (max_words=2) ---")
-    # "走る" -> "動く", "食べる" -> "飲む" など
-    test_sentence_2 = "彼は公園で速く走り、ご飯を食べる。"
-    # max_words=2 にして、文中の2つの動詞を狙う
-    replacer_verb = SynonymReplace(data=DUMMY_DATA, data_field='question', max_words=2, pos_tag='動詞')
+    attacker = SynonymReplace(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag=None)
     
-    dummy_sample_2 = DUMMY_DATA[0].copy()
-    dummy_sample_2['question'] = test_sentence_2
-    replacer_verb.apply_on_sample(dummy_sample_2)
-
-
-    # --- Test Case 3: 形容詞の置換 ---
-    print("\n--- Test Case 3: Adjective Replacement ---")
-    # "美しい" -> "綺麗", "高い" -> "大きい" など
-    test_sentence_3 = "この美しい花はとても高い。"
-    replacer_adj = SynonymReplace(data=DUMMY_DATA, data_field='question', max_words=2, pos_tag='形容詞')
-    
-    dummy_sample_3 = DUMMY_DATA[0].copy()
-    dummy_sample_3['question'] = test_sentence_3
-    replacer_adj.apply_on_sample(dummy_sample_3)
+    for i, sent in enumerate(test_sentences):
+        dummy_sample = DUMMY_DATA[0].copy()
+        dummy_sample['question'] = sent
+        attacker.apply_on_sample(dummy_sample)

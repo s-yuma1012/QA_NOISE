@@ -12,11 +12,7 @@ from tqdm import tqdm
 tagger = Tagger()
 
 class HomophoneError:
-    """
-    日本語版の漢字変換ミス攻撃クラス。
-    SKK辞書を利用して、同音異義語（または同音の誤字）に置換します。
-    例: "会議" -> "懐疑"
-    """
+    
     def __init__(self, data: Dataset, data_field: str='question', max_words: int=1, pos_tag: str=None):
         self.max_words: int = max_words
         self.pos_tag = pos_tag
@@ -84,7 +80,7 @@ class HomophoneError:
         raw_text = sample[self.data_field]
         
         # DEBUG: 処理開始と元のテキストを表示
-        print(f"\n[DEBUG-SENTENCE] Original Text: {raw_text}")
+        print(f"\nOriginal Text: {raw_text}")
 
         tokens = list(tagger(raw_text)) 
         target_indices = [] 
@@ -165,57 +161,37 @@ class HomophoneError:
                     # ランダムに誤変換候補を選択
                     new_word = random.choice(valid_candidates)
                     
-                    print(f"[DEBUG-SENTENCE] -> Homophone Error: '{original_word}'({yomi}) -> '{new_word}'")
+                    print(f"-> Homophone change: '{original_word}'({yomi}) -> '{new_word}'")
                     word_list[idx] = new_word
             
             perturbed_text = "".join(word_list)
             
         sample[f'{self.data_field}_perturbed_HOM'] = perturbed_text
         
-        print(f"[DEBUG-SENTENCE] Final: {perturbed_text}")
-        print("----------------------------------")
+        print(f"Final Perturbed Text: {perturbed_text}")
         
         return sample
 
 if __name__ == "__main__":
-    # ダミーデータの準備
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー'], 'context': ['ダミー']})
+    from datasets import Dataset 
     
-    # テストしたい文のリスト
+    # JSQuADから抽出した実データ5件
     test_sentences = [
-        "重要な会議で質問をする。",          # 基本パターン (会議->懐疑, 質問->室紋など)
-        "彼は自信を持って解答した。",        # 自信->自身, 解答->回答
-        "機械を移動させる。",               # 機械->機会, 移動->異動
-        "速く走る。",                       # 動詞・形容詞 (速く->早く)
-        "意思決定のプロセス。",             # 意思->医師/遺志
-        "コンピューターを操作する。",       # カタカナ語 (辞書にあれば変換されるかも)
-        "東京大学。",                       # 固有名詞 (候補がない場合スキップされるか確認)
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
     ]
     
-    # 攻撃インスタンスを作成 (max_wordsを多めにして、可能な限り変換させる設定)
-    attacker = HomophoneError(data=DUMMY_DATA, data_field='question', max_words=3, pos_tag=None)
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
-    print("\n" + "="*50)
-    print("   Homophone Error Attack Test Runner")
-    print("="*50 + "\n")
-
-    for i, sentence in enumerate(test_sentences):
-        print(f"--- Test Case {i+1} ---")
-        
-        # サンプルのコピーを作成して上書き
+    print(f"\n=== Homophone Error Test (JSQuAD) ===")
+    
+    attacker = HomophoneError(data=DUMMY_DATA, data_field='question', max_words=2, pos_tag=None)
+    
+    for i, sent in enumerate(test_sentences):
         dummy_sample = DUMMY_DATA[0].copy()
-        dummy_sample['question'] = sentence
+        dummy_sample['question'] = sent
         
-        # 攻撃実行
-        result = attacker.apply_on_sample(dummy_sample)
-        
-        # 結果表示 (DEBUGログが出るので、ここではシンプルに比較)
-        original = sentence
-        perturbed = result.get('question_perturbed_HOM', 'Error')
-        
-        if original != perturbed:
-            print(f"✅ SUCCESS: '{original}' -> '{perturbed}'")
-        else:
-            print(f"⏺️ NO CHANGE (No candidates or skipped)")
-        
-        print("\n")
+        attacker.apply_on_sample(dummy_sample)

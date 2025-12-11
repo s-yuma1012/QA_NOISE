@@ -119,26 +119,27 @@ class RepeatChar:
         return sample
 
 if __name__ == "__main__":
-    # クイックテスト
     from datasets import Dataset 
-    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': ['ダミー質問'], 'context': ['ダミー文脈']})
     
-    # テスト文:
-    # 1. "東京大学" -> 漢字のみ (スキップされるべき)
-    # 2. "しました" -> ひらがなのみ (繰り返されるべき)
-    # 3. "食べ物" -> 漢字かな混じり (「べ」だけが候補になるべき)
+    # JSQuADから抽出した実データ5件
     test_sentences = [
-        "東京大学の研究。", 
-        "確認しました。", 
-        "美味しい食べ物。"
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
     ]
-
-    # 攻撃インスタンスを作成
-    repeater = RepeatChar(data=DUMMY_DATA, data_field='question', max_perturbs=1, length_of_word_to_perturb=1)
-
-    print(f"\n--- [Quick Test: Hiragana Repetition] ---")
     
-    for sent in test_sentences:
+    DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
+
+    print(f"\n=== Test Runner with JSQuAD Samples ===")
+    
+    attacker = RepeatChar(data=DUMMY_DATA, data_field='question', max_perturbs=1, length_of_word_to_perturb=1)
+    
+    for i, sent in enumerate(test_sentences):
+        print(f"\n--- Sample {i+1} ---")
         dummy_sample = DUMMY_DATA[0].copy()
         dummy_sample['question'] = sent
-        repeater.apply_on_sample(dummy_sample)
+        
+        # 実行 (内部でDEBUGプリントが出ます)
+        attacker.apply_on_sample(dummy_sample)

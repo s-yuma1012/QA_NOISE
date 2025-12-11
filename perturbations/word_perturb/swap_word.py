@@ -8,11 +8,7 @@ from tqdm import tqdm
 tagger = Tagger()
 
 class SwapWord:
-    """
-    日本語版の単語交換攻撃クラス (SwapRQ, SwapRCなどに対応)。
-    文中のランダムな2つの単語（または品詞指定の単語）の位置を入れ替えます。
-    例: "私が学校に行く" -> "学校が私に行く"
-    """
+    
     def __init__(self, data: Dataset, data_field: str='question', max_words: int=1, pos_tag: str=None):
         # max_words は「何組のペアを交換するか」として解釈します
         self.max_words: int = max_words 
@@ -25,7 +21,7 @@ class SwapWord:
         raw_text = sample[self.data_field]
         
         # DEBUG: 処理開始と元のテキストを表示
-        print(f"\n[DEBUG-SENTENCE] Original Text: {raw_text}")
+        print(f"\nOriginal Text: {raw_text}")
 
         tokens = list(tagger(raw_text)) 
         target_indices = [] 
@@ -72,7 +68,7 @@ class SwapWord:
                 idx1, idx2 = pair[0], pair[1]
                 
                 # DEBUG: 交換する単語を表示
-                print(f"[DEBUG-SENTENCE] -> Swapping Words: '{word_list[idx1]}' <-> '{word_list[idx2]}'")
+                print(f"-> Swapping Words: '{word_list[idx1]}' <-> '{word_list[idx2]}'")
                 
                 # リスト上で直接スワップ
                 word_list[idx1], word_list[idx2] = word_list[idx2], word_list[idx1]
@@ -91,22 +87,31 @@ class SwapWord:
         sample[f'{self.data_field}_perturbed_SWR'] = perturbed_text
         
         # DEBUG: 最終結果を表示
-        print(f"[DEBUG-SENTENCE] Final Perturbed Text: {perturbed_text}")
-        print("----------------------------------")
+        print(f"Final Perturbed Text: {perturbed_text}")
         
         return sample
 
 if __name__ == "__main__":
-    # クイックテスト
+    from datasets import Dataset 
+    
+    # JSQuADから抽出した実データ5件
+    test_sentences = [
+        '9月1日の党代表選で選ばれた保守系の人物は？',
+        '南アメリカの大国で、人口も多く、活気あふれる国として知られるところは。',
+        '元は「日本共産党打倒」を掲げていた勢力が共産党と共に集会をする機会が増え始めたのはいつ以降？',
+        '文春文庫はどこが出しているレーベル',
+        '政府の経済政策による新工業化にもっとも寄与したのは何社？',
+    ]
+    
     DUMMY_DATA = Dataset.from_dict({'id': ['0'], 'question': [''], 'context': ['']})
     
-    # テスト文
-    test_sentence = "東京大学の研究結果が、広く知られています。"
+    print(f"\n=== Swap Word Test (JSQuAD) ===")
     
-    # 1. 名詞同士を交換
-    swapper = SwapWord(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag='名詞')
+    attacker = SwapWord(data=DUMMY_DATA, data_field='question', max_words=1, pos_tag="None")
     
-    dummy_sample = DUMMY_DATA[0].copy()
-    dummy_sample['question'] = test_sentence
-    
-    result = swapper.apply_on_sample(dummy_sample)
+    for i, sent in enumerate(test_sentences):
+        dummy_sample = DUMMY_DATA[0].copy()
+        dummy_sample['question'] = sent
+        
+        # 実行 (内部でDEBUGログが出力されます)
+        attacker.apply_on_sample(dummy_sample)

@@ -65,6 +65,7 @@ requests==2.32.4
 requests-oauthlib==2.0.0
 rsa==4.9.1
 safetensors==0.5.3
+sentencepiece==0.2.0
 six==1.17.0
 sympy==1.13.3
 tensorboard==2.13.0
@@ -73,6 +74,7 @@ tensorflow==2.13.1
 tensorflow-estimator==2.13.0
 tensorflow-io-gcs-filesystem==0.34.0
 termcolor==2.4.0
+tiktoken==0.7.0
 tokenizers==0.20.3
 torch==2.4.1
 tqdm==4.67.1

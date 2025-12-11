@@ -8,11 +8,7 @@ from tqdm import tqdm
 tagger = Tagger()
 
 class RepeatWord:
-    """
-    日本語版の単語繰り返し攻撃クラス (RepeatWR, RepeatVRなどに対応)。
-    ランダムな単語（または品詞指定の単語）を複製して直後に挿入します。
-    例: "東京大学" -> "東京大学東京大学"
-    """
+    
     def __init__(self, data: Dataset, data_field: str='question', max_words: int=1, pos_tag: str=None):
         self.max_words: int = max_words
         self.pos_tag = pos_tag # 日本語品詞タグ (例: '名詞', '動詞')
