@@ -10,3 +10,9 @@ __pycache__/
 
 # OS固有ファイル
 .DS_Store
+
+# Generated datasets
+perturbed_data/
+
+#evalu results
+evaluation*.json
