@@ -216,7 +216,7 @@ def main():
             print(f"\nProcessing {filename} | Column: {target_question_key}")
             
             # 評価実行
-            em, f1 = evaluate_dataset(
+            f1,em = evaluate_dataset(
                 model, tokenizer, tagger, data, device, args.batch_size, target_question_key
             )
             
