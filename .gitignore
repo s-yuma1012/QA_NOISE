@@ -16,3 +16,6 @@ perturbed_data/
 
 #evalu results
 evaluation*.json
+
+#perdiction logs
+prediction_logs/
